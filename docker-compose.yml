@@ -1,36 +1,30 @@
-version: '3.9'
-
 services:
-  # 1. Service Registry
+  # --- INFRAESTRUTURA DE REDE ---
   consul:
-    # ... (igual ao anterior)
-    networks:
-      - lps_network
-
-  # 2. API Gateway
-  traefik:
-    # ... (igual ao anterior)
-    networks:
-      - lps_network
-
-  # 3. O BANCO DE DADOS (NOVO!)
-  postgres-db:
-    image: postgres:15
-    container_name: postgres-db
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: catalogo_db
+    image: consul:1.18
+    container_name: consul-local
+    command: agent -server -ui -node=server-1 -bootstrap-expect=1 -client=0.0.0.0
     ports:
-      - "5432:5432" # Expõe a porta para o host (nosso app FastAPI)
+      - "8500:8500"
     networks:
-      - lps_network
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - lps_network_local
+
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik-local
+    command:
+      - "--api.insecure=true"
+      - "--entrypoints.web.address=:8080"
+      - "--providers.consulcatalog.prefix=traefik"
+      - "--providers.consulcatalog.endpoint.address=consul-local:8500"
+    ports:
+      - "8080:8080" # Gateway
+      - "8181:8080" # Dashboard
+    depends_on:
+      - consul
+    networks:
+      - lps_network_local
 
 networks:
-  lps_network:
+  lps_network_local:
     driver: bridge
-
-volumes: # Volume para persistir os dados do DB
-  postgres_data:

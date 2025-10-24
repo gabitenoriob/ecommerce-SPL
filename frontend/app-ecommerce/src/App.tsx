@@ -56,9 +56,6 @@ function App() {
     fetchProdutos(); // Chama a função que acabamos de criar
   }, []); // O [] vazio garante que isso rode só uma vez
 
-  // --- Renderização (O que aparece na tela) ---
-
-  // Se estiver carregando, mostra uma mensagem
   if (loading) {
     return <div className="loading-message">Carregando catálogo...</div>
   }
