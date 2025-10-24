@@ -44,8 +44,7 @@ def deregister_service():
     print(f"Removendo serviço {SERVICE_ID} do Consul...")
     c.agent.service.deregister(service_id=SERVICE_ID)
 
-app = FastAPI(title="Microserviço de Catálogo")
-
+app = FastAPI(title="Microserviço de Catálogo", root_path="/api/catalogo")
 @app.on_event("startup")
 async def startup_event():
     # NOVO: Criar as tabelas no DB
@@ -78,7 +77,8 @@ async def create_produto(
     db_produto = models.Produto(
         nome=produto.nome,
         descricao=produto.descricao,
-        preco=produto.preco
+        preco=produto.preco,
+        imagem_url=produto.imagem_url
     )
     db.add(db_produto)
     db.commit()
