@@ -5,7 +5,7 @@ import atexit
 import socket
 
 # Importa nossos novos schemas
-from . import schemas
+import schema
 
 # --- 1. CONFIGURAÇÕES DO SERVIÇO (Modificadas) ---
 SERVICE_NAME = "ms-frete" 
