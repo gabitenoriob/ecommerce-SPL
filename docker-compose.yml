@@ -1,29 +1,94 @@
 services:
-  # --- INFRAESTRUTURA DE REDE ---
-  consul:
-    image: hashicorp/consul:latest
-    container_name: consul-local
-    command: agent -server -ui -node=server-1 -bootstrap-expect=1 -client=0.0.0.0
-    ports:
-      - "8500:8500" # UI e API do Consul
+  # --- MICROSERVIÇOS BACKEND ---
+  ms-carrinho:
+    build:
+      context: backend/ms-carrinho
+    container_name: ms_carrinho
+    restart: always
     networks:
       - lps_network_local
+    environment:
+      - DATABASE_URL=postgresql://lps_carrinho_user:BYGO4ZfFm8J6CrIV8R7dgUjcjUv0WcOm@dpg-d3vr2ea4d50c73ak8a60-a.oregon-postgres.render.com/lps_carrinho
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=lps_network_local"
+      - "traefik.http.routers.ms-carrinho.rule=Host(`app.localhost`) && PathPrefix(`/api/carrinho`)"
+      - "traefik.http.routers.ms-carrinho.entrypoints=web"
+      - "traefik.http.middlewares.strip-carrinho.stripprefix.prefixes=/api/carrinho"
+      - "traefik.http.routers.ms-carrinho.middlewares=strip-carrinho,cors-header"
+      - "traefik.http.services.ms-carrinho.loadbalancer.server.port=8002"
 
+  ms-catalogo:
+    build:
+      context: backend/ms-catalogo
+    container_name: ms_catalogo
+    restart: always
+    networks:
+      - lps_network_local
+    environment:
+      - DATABASE_URL=postgresql://lps_catalogo_user:tExbtivkJOxm4RUcryNYkFdQrIdgpJEL@dpg-d3vpl9bipnbc739k3b1g-a.ohio-postgres.render.com/lps_catalogo
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=lps_network_local"
+      - "traefik.http.routers.ms-catalogo.rule=Host(`app.localhost`) && PathPrefix(`/api/catalogo`)"
+      - "traefik.http.routers.ms-catalogo.entrypoints=web"
+      - "traefik.http.middlewares.strip-catalogo.stripprefix.prefixes=/api/catalogo"
+      - "traefik.http.routers.ms-catalogo.middlewares=strip-catalogo,cors-header"
+      - "traefik.http.services.ms-catalogo.loadbalancer.server.port=8001"
+
+  ms-frete:
+    build:
+      context: backend/ms-frete
+    container_name: ms_frete
+    restart: always
+    networks:
+      - lps_network_local
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=lps_network_local"
+      - "traefik.http.routers.ms-frete.rule=Host(`app.localhost`) && PathPrefix(`/api/frete`)"
+      - "traefik.http.routers.ms-frete.entrypoints=web"
+      - "traefik.http.middlewares.strip-frete.stripprefix.prefixes=/api/frete"
+      - "traefik.http.routers.ms-frete.middlewares=strip-frete,cors-header"
+      - "traefik.http.services.ms-frete.loadbalancer.server.port=8003"
+
+  # --- FRONTEND ---
+  frontend:
+    build:
+      context: frontend/app-ecommerce
+    container_name: frontend
+    restart: always
+    networks:
+      - lps_network_local
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=lps_network_local"
+      - "traefik.http.routers.frontend.rule=Host(`app.localhost`)"
+      - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.routers.frontend.middlewares=cors-header"
+      - "traefik.http.services.frontend.loadbalancer.server.port=5173"
+
+  # --- GATEWAY ---
   traefik:
     image: traefik:v3.0
     container_name: traefik-local
     command:
+      # --- Pontos de Entrada ---
       - "--entrypoints.web.address=:8080"
-      - "--api.insecure=true"
       - "--entrypoints.dashboard.address=:8081"
+      # --- Provedor Docker ---
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      # --- Dashboard e API ---
       - "--api.dashboard=true"
-      - "--providers.consulcatalog.prefix=traefik"
-      - "--providers.consulcatalog.endpoint.address=consul-local:8500"
+      - "--api.insecure=true"
+      # --- Log ---
+      - "--log.level=INFO"
     ports:
-      - "8888:8080"  # External API (web entrypoint)
+      - "8888:8080"  # API Gateway (web)
       - "8181:8081"  # Dashboard
-    depends_on:
-      - consul
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - lps_network_local
   # SERVIÇO DE PAGAMENTO
@@ -49,6 +114,17 @@ services:
     # A dependência do Consul garante que ele se registre no momento certo
     depends_on:
       - consul-local
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=lps_network_local"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.dashboard.entrypoints=dashboard"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      # --- DEFINIÇÃO DO MIDDLEWARE CORS AGORA AQUI ---
+      - "traefik.http.middlewares.cors-header.headers.accesscontrolalloworigins=http://app.localhost:8888,http://localhost:5173"
+      - "traefik.http.middlewares.cors-header.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS"
+      - "traefik.http.middlewares.cors-header.headers.accesscontrolallowheaders=*"
+      - "traefik.http.middlewares.cors-header.headers.accesscontrolallowcredentials=true"
 
 networks:
   lps_network_local:
