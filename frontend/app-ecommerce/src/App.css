@@ -97,3 +97,147 @@ h1 {
   margin: 0;
   text-align: right;
 }
+/* --- Layout Principal (2 Colunas) --- */
+.app-layout {
+  display: grid;
+  /* Cria duas colunas: a primeira (catálogo) ocupa 3x mais espaço */
+  /* que a segunda (carrinho) */
+  grid-template-columns: 3fr 1fr;
+  gap: 2rem;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 2rem;
+  align-items: flex-start; /* Alinha o topo das colunas */
+}
+
+/* Garante que o catálogo use o espaço */
+.catalogo-container {
+  width: 100%;
+}
+
+/* --- Estilos do Card de Produto (Modificado) --- */
+
+.produto-info {
+  /* Remove o 'flex-grow: 1' para o botão ficar alinhado */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.produto-descricao {
+  flex-grow: 1; /* Empurra o footer para baixo */
+}
+
+.produto-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.add-to-cart-btn {
+  background-color: #c792ea;
+  color: #1a1a1a;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6em 1em;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-to-cart-btn:hover {
+  background-color: #b373d9;
+}
+
+
+/* --- Coluna do Carrinho --- */
+.carrinho-container {
+  background-color: #242424;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 1.5rem;
+  /* Faz o carrinho "grudar" no topo quando o usuário rola a página */
+  position: sticky;
+  top: 2rem; 
+}
+
+.carrinho-container h2 {
+  margin-top: 0;
+  color: #ffafcc;
+  border-bottom: 1px solid #444;
+  padding-bottom: 1rem;
+}
+
+.carrinho-lista {
+  max-height: 50vh; /* Altura máxima, para não ficar gigante */
+  overflow-y: auto; /* Adiciona scroll se tiver muitos itens */
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* --- Item Individual do Carrinho --- */
+.carrinho-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid #333;
+  padding-bottom: 1rem;
+}
+
+.carrinho-item:last-child {
+  border-bottom: none;
+}
+
+.carrinho-item img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.carrinho-item-info {
+  flex-grow: 1;
+}
+
+.carrinho-item-info .item-nome {
+  font-weight: bold;
+  font-size: 0.95rem;
+  margin: 0;
+}
+.carrinho-item-info .item-preco {
+  font-size: 0.9rem;
+  color: #aaa;
+  margin: 0;
+}
+
+.remove-item-btn {
+  background-color: #ff6b6b;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  line-height: 25px;
+  padding: 0;
+}
+
+/* --- Total do Carrinho --- */
+.carrinho-total {
+  border-top: 2px solid #444;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+.carrinho-total p {
+  margin: 0;
+  color: #c792ea;
+}
