@@ -35,7 +35,7 @@ function App() {
     const fetchProdutos = async () => {
       try {
         // 1. Tenta buscar os produtos do seu API Gateway
-        const response = await axios.get('http://localhost:8080/api/catalogo/produtos/');
+        const response = await axios.get('http://localhost:8001/api/catalogo/produtos/');
         
         // 2. Se der certo, salva os produtos no estado
         setProdutos(response.data);
