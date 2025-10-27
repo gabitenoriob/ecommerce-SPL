@@ -26,6 +26,29 @@ services:
       - consul
     networks:
       - lps_network_local
+  # SERVIÇO DE PAGAMENTO
+  ms-pagamento:
+    build:
+      context: ./backend/ms-pagamento
+      dockerfile: Dockerfile
+    image: ecommerce-spl/ms-pagamento
+    container_name: ms-pagamento
+    ports:
+      - "8004:8004" # Porta interna:externa
+    environment:
+      # TRAEFIK Tags (para o Traefik rotear as requisições)
+      - "TRAEFIK_TAGS=traefik.http.routers.ms-pagamento.rule=PathPrefix(`/api/pagamento`)"
+    labels:
+      # Configuração do Traefik para o serviço de pagamento
+      - "traefik.enable=true"
+      - "traefik.http.routers.ms-pagamento.rule=PathPrefix(`/api/pagamento`)"
+      - "traefik.http.routers.ms-pagamento.entrypoints=web"
+      - "traefik.http.services.ms-pagamento.loadbalancer.server.port=8004"
+    networks:
+      - lps_network_local 
+    # A dependência do Consul garante que ele se registre no momento certo
+    depends_on:
+      - consul-local
 
 networks:
   lps_network_local:

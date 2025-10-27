@@ -1,0 +1,10 @@
+# FastAPI framework
+fastapi
+uvicorn
+
+# Dependency for Pydantic
+pydantic
+
+# Used for HTTP requests (if connecting to external payment API)
+# Embora não vá ser usado no esqueleto, é bom para integração futura.
+# aiohttp
