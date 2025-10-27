@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 import atexit
 import socket
 import models,schema, database
+from fastapi.middleware.cors import CORSMiddleware
 
 SERVICE_NAME = "ms-carrinho" 
 SERVICE_ID = f"{SERVICE_NAME}-{socket.gethostname()}"
@@ -41,6 +42,18 @@ def deregister_service():
     c.agent.service.deregister(service_id=SERVICE_ID)
 
 app = FastAPI(title="Microserviço de Carrinho", root_path="/api/carrinho")
+origins = [
+    "http://localhost:5173",
+    "http://localhost:3000", 
+    "http://localhost",
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,       # Quais URLs podem fazer requisições
+    allow_credentials=True,    # Permite cookies (se houver)
+    allow_methods=["*"],       # Permite todos os métodos (GET, POST, etc)
+    allow_headers=["*"],       # Permite todos os cabeçalhos
+)
 
 @app.on_event("startup")
 async def startup_event():

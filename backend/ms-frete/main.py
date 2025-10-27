@@ -3,6 +3,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 import atexit
 import socket
+from fastapi.middleware.cors import CORSMiddleware
 
 # Importa nossos novos schemas
 import schema
@@ -47,6 +48,18 @@ def deregister_service():
 
 # --- 5. INICIALIZAÇÃO DO APP (Modificado) ---
 app = FastAPI(title="Microserviço de Frete", root_path="/api/frete") # <-- MUDOU
+origins = [
+    "http://localhost:5173",
+    "http://localhost:3000", 
+    "http://localhost",
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,       # Quais URLs podem fazer requisições
+    allow_credentials=True,    # Permite cookies (se houver)
+    allow_methods=["*"],       # Permite todos os métodos (GET, POST, etc)
+    allow_headers=["*"],       # Permite todos os cabeçalhos
+)
 
 @app.on_event("startup")
 async def startup_event():

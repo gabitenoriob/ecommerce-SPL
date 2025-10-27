@@ -13,22 +13,15 @@ services:
     image: traefik:v3.0
     container_name: traefik-local
     command:
-      # 1. Define o EntryPoint principal (Gateway) na porta 8080 (INTERNA)
       - "--entrypoints.web.address=:8080"
-      
-      # 2. Habilita a API e o Dashboard (também na porta 8080 INTERNA)
       - "--api.insecure=true"
+      - "--entrypoints.dashboard.address=:8081"
       - "--api.dashboard=true"
-
-      # 3. Diz ao Traefik para buscar serviços no Consul
       - "--providers.consulcatalog.prefix=traefik"
       - "--providers.consulcatalog.endpoint.address=consul-local:8500"
     ports:
-      # 4. Mapeia a porta 8888 (do SEU PC) para a porta 8080 (do container)
-      - "8888:8080" # <-- SEU GATEWAY (API) VAI RODAR AQUI
-      
-      # 5. Mapeia a porta 8181 (do SEU PC) para a porta 8080 (do container)
-      - "8181:8080" # <-- SEU DASHBOARD VAI RODAR AQUI
+      - "8888:8080"  # External API (web entrypoint)
+      - "8181:8081"  # Dashboard
     depends_on:
       - consul
     networks:

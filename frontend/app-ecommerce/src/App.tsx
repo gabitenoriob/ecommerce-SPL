@@ -44,7 +44,7 @@ interface OpcaoFrete {
 // --- 2. API Endpoints ---
 const API_GATEWAY_URL = "http://localhost:8888";
 const CATALOGO_API = `${API_GATEWAY_URL}/api/catalogo`;
-const FRETE_API = `${API_GATEWAY_URL}/api/frete`; // <-- NOVO
+const FRETE_API = `${API_GATEWAY_URL}/api/frete`; 
 
 // --- 3. COMPONENTE PRINCIPAL ---
 function App() {

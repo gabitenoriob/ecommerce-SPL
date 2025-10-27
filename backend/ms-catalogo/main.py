@@ -79,7 +79,6 @@ app.add_middleware(
     allow_methods=["*"],       # Permite todos os métodos (GET, POST, etc)
     allow_headers=["*"],       # Permite todos os cabeçalhos
 )
-# A linha 'atexit.register(deregister_service)' foi removida
 
 # Esta função gerencia a sessão do banco de dados para cada requisição
 def get_db():
