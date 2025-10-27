@@ -2,7 +2,6 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 import schema
 
-# --- REMOVEMOS TODO O CÓDIGO DO CONSUL ---
 
 # --- Configurações do Serviço ---
 SERVICE_HOST = "0.0.0.0"
@@ -10,7 +9,6 @@ SERVICE_PORT = 8003 # <-- Porta 8003 (como definimos no compose)
 
 app = FastAPI(title="Microserviço de Frete", root_path="/api/frete")
 
-# --- Não precisamos de @app.on_event("startup") ---
 
 # --- Endpoints (A lógica do mock continua igual) ---
 @app.get("/health")

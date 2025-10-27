@@ -54,7 +54,22 @@ services:
       - "traefik.http.middlewares.strip-frete.stripprefix.prefixes=/api/frete"
       - "traefik.http.routers.ms-frete.middlewares=strip-frete,cors-header"
       - "traefik.http.services.ms-frete.loadbalancer.server.port=8003"
-
+  ms-pagamento:
+    build:
+      context: ./backend/ms-pagamento
+      dockerfile: Dockerfile
+    container_name: ms_pagamento
+    restart: always
+    networks:
+      - lps_network_local
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=lps_network_local"
+      - "traefik.http.routers.ms-pagamento.rule=Host(`app.localhost`) && PathPrefix(`/api/pagamentos`)"
+      - "traefik.http.routers.ms-pagamento.entrypoints=web"
+      - "traefik.http.middlewares.strip-pagamento.stripprefix.prefixes=/api/pagamentos"
+      - "traefik.http.routers.ms-pagamento.middlewares=strip-pagamento,cors-header"
+      - "traefik.http.services.ms-pagamento.loadbalancer.server.port=8004"  
   # --- FRONTEND ---
   frontend:
     build:

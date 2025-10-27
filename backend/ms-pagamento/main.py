@@ -1,7 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from typing import Dict
 from schema import PagamentoRequest, PagamentoResponse, StatusPagamento
+SERVICE_HOST = "0.0.0.0"
+SERVICE_PORT = 8004 
 
+app = FastAPI(title="Microserviço de Pagamentos", root_path="/api/pagamentos")
 # Dicionário simples para simular o banco de dados de pagamentos
 # Chave: id_pagamento, Valor: objeto PagamentoResponse
 db_pagamentos: Dict[str, PagamentoResponse] = {}
