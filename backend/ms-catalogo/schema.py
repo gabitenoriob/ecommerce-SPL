@@ -1,10 +1,11 @@
 from pydantic import BaseModel
+from typing import Optional
 
 class ProdutoBase(BaseModel):
     nome: str
-    descricao: str | None = None
+    descricao: Optional[str] = None
     preco: float
-    imagem_url: str | None = None
+    imagem_url: Optional[str] = None
 
 # Schema para CRIAR um produto 
 class ProdutoCreate(ProdutoBase):

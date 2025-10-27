@@ -2,10 +2,13 @@ import consul
 import uvicorn
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-import atexit
 import socket
-from . import models, schemas, database
+import models
+import schema
+import database
+from typing import List 
 
+from fastapi.middleware.cors import CORSMiddleware
 # --- Configurações do Serviço ---
 SERVICE_NAME = "ms-catalogo"
 SERVICE_ID = f"{SERVICE_NAME}-{socket.gethostname()}"
@@ -35,7 +38,8 @@ def register_service():
         port=SERVICE_PORT,
         tags=traefik_tags,
         check=consul.Check.http(
-            f"http://{SERVICE_HOST}:{SERVICE_PORT}/api/catalogo/health",
+            # O health check precisa incluir o root_path
+            f"http://{SERVICE_HOST}:{SERVICE_PORT}/api/catalogo/health", 
             "10s"
         )
     )
@@ -44,14 +48,38 @@ def deregister_service():
     print(f"Removendo serviço {SERVICE_ID} do Consul...")
     c.agent.service.deregister(service_id=SERVICE_ID)
 
-app = FastAPI(title="Microserviço de Catálogo", root_path="/api/catalogo")
-@app.on_event("startup")
-async def startup_event():
-    # NOVO: Criar as tabelas no DB
-    models.Base.metadata.create_all(bind=database.engine)
-    register_service()
+from contextlib import asynccontextmanager
 
-atexit.register(deregister_service)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # --- Code to run ON STARTUP ---
+    register_service()
+    print("Application is starting up...")
+    
+    yield # O aplicativo fica em execução aqui
+    
+    # --- Code to run ON SHUTDOWN ---
+    deregister_service()
+    print("Application is shutting down...")
+
+app = FastAPI(
+    title="Microserviço de Catálogo", 
+    root_path="/api/catalogo", 
+    lifespan=lifespan
+)
+origins = [
+    "http://localhost:5173",
+    "http://localhost:3000", 
+    "http://localhost",
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,       # Quais URLs podem fazer requisições
+    allow_credentials=True,    # Permite cookies (se houver)
+    allow_methods=["*"],       # Permite todos os métodos (GET, POST, etc)
+    allow_headers=["*"],       # Permite todos os cabeçalhos
+)
+# A linha 'atexit.register(deregister_service)' foi removida
 
 # Esta função gerencia a sessão do banco de dados para cada requisição
 def get_db():
@@ -63,15 +91,15 @@ def get_db():
 
 # --- Endpoints da API (CRUD) ---
 
-# Health check para o Consul
+# Health check para o Consul (acessível em /api/catalogo/health)
 @app.get("/health")
 async def health():
     return {"status": "ok"}
 
 # Rota para CRIAR um produto (POST)
-@app.post("/produtos/", response_model=schemas.Produto)
+@app.post("/produtos/", response_model=schema.Produto)
 async def create_produto(
-    produto: schemas.ProdutoCreate, 
+    produto: schema.ProdutoCreate, 
     db: Session = Depends(get_db)
 ):
     db_produto = models.Produto(
@@ -86,7 +114,7 @@ async def create_produto(
     return db_produto
 
 # Rota para LER produtos (GET)
-@app.get("/produtos/", response_model=list[schemas.Produto])
+@app.get("/produtos/", response_model=List[schema.Produto])
 async def read_produtos(
     skip: int = 0, 
     limit: int = 100, 
@@ -96,7 +124,7 @@ async def read_produtos(
     return produtos
 
 # Rota para LER um produto específico (GET por ID)
-@app.get("/produtos/{produto_id}", response_model=schemas.Produto)
+@app.get("/produtos/{produto_id}", response_model=schema.Produto)
 async def read_produto(produto_id: int, db: Session = Depends(get_db)):
     db_produto = db.query(models.Produto).filter(models.Produto.id == produto_id).first()
     if db_produto is None:
@@ -108,5 +136,5 @@ if __name__ == "__main__":
         "main:app", 
         host=SERVICE_HOST, 
         port=SERVICE_PORT, 
-        reload=True
+        reload=True 
     )
