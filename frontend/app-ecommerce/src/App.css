@@ -241,3 +241,46 @@ h1 {
   margin: 0;
   color: #c792ea;
 }
+
+/* --- ESTILOS PARA A TELA DE LOGIN --- */
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  text-align: center;
+}
+
+.login-container form {
+  background-color: #242424;
+  padding: 3rem;
+  border-radius: 12px;
+  border: 1px solid #333;
+}
+
+.login-container h1 {
+  color: #ffafcc;
+  margin-top: 0;
+}
+
+.login-container input {
+  font-size: 1.2rem;
+  padding: 0.8rem;
+  border-radius: 8px;
+  border: 1px solid #444;
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.login-container button {
+  font-size: 1.2rem;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  background-color: #c792ea;
+  color: #1a1a1a;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 1.5rem;
+  width: 100%;
+}

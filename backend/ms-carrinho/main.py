@@ -4,7 +4,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 import atexit
 import socket
-from . import models, schemas, database
+import models,schema, database
 
 SERVICE_NAME = "ms-carrinho" 
 SERVICE_ID = f"{SERVICE_NAME}-{socket.gethostname()}"
@@ -66,17 +66,17 @@ async def health():
 def get_carrinho_data(db: Session, user_id: str):
     itens = db.query(models.ItemCarrinho).filter(models.ItemCarrinho.user_id == user_id).all()
     valor_total = sum(item.preco_produto * item.quantidade for item in itens)
-    return schemas.Carrinho(user_id=user_id, items=itens, valor_total=valor_total)
+    return schema.Carrinho(user_id=user_id, items=itens, valor_total=valor_total)
 
-@app.get("/{user_id}", response_model=schemas.Carrinho)
+@app.get("/{user_id}", response_model=schema.Carrinho)
 async def obter_carrinho(user_id: str, db: Session = Depends(get_db)):
     return get_carrinho_data(db, user_id)
 
 # Rota para ADICIONAR/ATUALIZAR um item
-@app.post("/{user_id}", response_model=schemas.Carrinho)
+@app.post("/{user_id}", response_model=schema.Carrinho)
 async def adicionar_item(
     user_id: str, 
-    item: schemas.ItemCreate, 
+    item: schema.ItemCreate, 
     db: Session = Depends(get_db)
 ):
     # 1. Verifica se o item JÁ EXISTE no carrinho deste usuário
@@ -106,7 +106,7 @@ async def adicionar_item(
     # Retorna o carrinho completo atualizado
     return get_carrinho_data(db, user_id)
 
-@app.delete("/{user_id}/{produto_id}", response_model=schemas.Carrinho)
+@app.delete("/{user_id}/{produto_id}", response_model=schema.Carrinho)
 async def remover_item(user_id: str, produto_id: int, db: Session = Depends(get_db)):
     db_item = db.query(models.ItemCarrinho).filter(
         models.ItemCarrinho.user_id == user_id,

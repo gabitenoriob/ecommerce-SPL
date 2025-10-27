@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional, List
 
 # Schema para criar/atualizar um item
 class ItemCreate(BaseModel):
@@ -19,5 +20,5 @@ class Item(ItemCreate):
 # Schema para o carrinho completo
 class Carrinho(BaseModel):
     user_id: str
-    items: list[Item]
+    items: List[Item]
     valor_total: float
