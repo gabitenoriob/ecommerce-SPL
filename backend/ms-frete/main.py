@@ -63,8 +63,8 @@ async def health():
     return {"status": "ok"}
 
 # Rota principal para CALCULAR o frete
-@app.post("/calcular", response_model=schemas.FreteResponse)
-async def calcular_frete(request: schemas.FreteRequest):
+@app.post("/calcular", response_model=schema.FreteResponse)
+async def calcular_frete(request: schema.FreteRequest):
     """
     Simula o cálculo de frete.
     A lógica é 100% "mockada" (falsa) apenas para fins de demonstração.
@@ -79,20 +79,20 @@ async def calcular_frete(request: schemas.FreteRequest):
 
     # Lógica de simulação:
     if cep.startswith("57"): # CEPs de Alagoas (ex: 57000-000)
-        opcoes.append(schemas.OpcaoFrete(metodo="SEDEX Local", prazo_dias=1, valor=15.00))
-        opcoes.append(schemas.OpcaoFrete(metodo="Entrega por Motoboy", prazo_dias=0, valor=25.00))
+        opcoes.append(schema.OpcaoFrete(metodo="SEDEX Local", prazo_dias=1, valor=15.00))
+        opcoes.append(schema.OpcaoFrete(metodo="Entrega por Motoboy", prazo_dias=0, valor=25.00))
 
     elif cep.startswith("01"): # CEPs de São Paulo (ex: 01000-000)
-        opcoes.append(schemas.OpcaoFrete(metodo="PAC", prazo_dias=7, valor=30.50))
-        opcoes.append(schemas.OpcaoFrete(metodo="SEDEX", prazo_dias=3, valor=55.00))
+        opcoes.append(schema.OpcaoFrete(metodo="PAC", prazo_dias=7, valor=30.50))
+        opcoes.append(schema.OpcaoFrete(metodo="SEDEX", prazo_dias=3, valor=55.00))
 
     else: # Qualquer outro CEP
-        opcoes.append(schemas.OpcaoFrete(metodo="PAC Padrão", prazo_dias=10, valor=28.00))
+        opcoes.append(schema.OpcaoFrete(metodo="PAC Padrão", prazo_dias=10, valor=28.00))
 
     if not opcoes:
          raise HTTPException(status_code=404, detail="Não há opções de entrega para este CEP.")
 
-    return schemas.FreteResponse(opcoes=opcoes)
+    return schema.FreteResponse(opcoes=opcoes)
 
 # --- 8. PONTO DE ENTRADA (Igual) ---
 if __name__ == "__main__":
