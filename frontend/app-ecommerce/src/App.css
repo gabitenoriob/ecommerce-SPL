@@ -284,3 +284,106 @@ h1 {
   margin-top: 1.5rem;
   width: 100%;
 }
+
+/* --- Seção de Frete --- */
+.frete-container {
+  border-top: 1px solid #444;
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+.frete-container h4 {
+  margin: 0 0 0.5rem 0;
+  color: #aaa;
+  font-weight: normal;
+}
+
+.cep-input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+.cep-input-group input {
+  flex-grow: 1;
+  background-color: #1a1a1a;
+  border: 1px solid #555;
+  border-radius: 6px;
+  padding: 0.6em;
+  color: white;
+}
+.cep-input-group button {
+  background-color: #555;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0 1em;
+  cursor: pointer;
+}
+.cep-input-group button:hover {
+  background-color: #666;
+}
+.cep-input-group button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --- Lista de Opções de Frete --- */
+.opcoes-frete-lista {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.opcao-frete-item {
+  display: flex;
+  justify-content: space-between;
+  background-color: #333;
+  padding: 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.2s;
+}
+.opcao-frete-item:hover {
+  border-color: #555;
+}
+.opcao-frete-item.selected {
+  border-color: #c792ea;
+  background-color: #3f3544;
+}
+.opcao-frete-item .metodo {
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+.opcao-frete-item .valor {
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+
+/* --- Total do Carrinho (Modificado) --- */
+.carrinho-total {
+  display: flex;
+  flex-direction: column; /* Mudar para coluna */
+  gap: 0.5rem; /* Espaço entre as linhas */
+  border-top: 2px solid #444;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+}
+.total-linha {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.1rem;
+}
+.total-linha.frete {
+  font-size: 1rem;
+  color: #ccc;
+}
+.total-linha.geral {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #c792ea;
+  margin-top: 0.5rem;
+}
+/* Remove o 'p' antigo (agora obsoleto) */
+.carrinho-total p {
+  display: none;
+}

@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import './App.css'
 
-// --- Tipos (Interfaces) ---
-// (Cole as mesmas interfaces que definimos antes: 
-// Produto, ItemCarrinho, Carrinho, ItemCreatePayload)
+// --- 1. DEFINIÇÃO DE TIPOS ---
+// (Cole as mesmas interfaces que definimos antes)
 interface Produto {
   id: number;
   nome: string;
@@ -34,16 +33,23 @@ interface ItemCreatePayload {
   imagem_url: string | null;
 }
 
-// --- API Endpoints ---
+// --- NOVOS TIPOS PARA O FRETE ---
+interface OpcaoFrete {
+  metodo: string;
+  prazo_dias: number;
+  valor: number;
+}
+
+
+// --- 2. API Endpoints ---
 const API_GATEWAY_URL = "http://localhost:8888";
 const CATALOGO_API = `${API_GATEWAY_URL}/api/catalogo`;
+const FRETE_API = `${API_GATEWAY_URL}/api/frete`; // <-- NOVO
 
-// --- Componente Principal ---
+// --- 3. COMPONENTE PRINCIPAL ---
 function App() {
-  // --- 1. ESTADO DE AUTENTICAÇÃO ---
-  // O usuário começa "deslogado"
+  // --- Estados de Autenticação ---
   const [userId, setUserId] = useState<string | null>(null); 
-  // Estado para o campo de input
   const [usernameInput, setUsernameInput] = useState("");
 
   // --- Estados do Catálogo ---
@@ -54,22 +60,29 @@ function App() {
   const [carrinho, setCarrinho] = useState<Carrinho | null>(null);
   const [loadingCarrinho, setLoadingCarrinho] = useState(true);
   
-  // --- Estado de Erro ---
+  // --- NOVOS ESTADOS DE FRETE ---
+  const [cep, setCep] = useState(""); // O que o usuário digita
+  const [opcoesFrete, setOpcoesFrete] = useState<OpcaoFrete[]>([]);
+  const [freteSelecionado, setFreteSelecionado] = useState<OpcaoFrete | null>(null);
+  const [loadingFrete, setLoadingFrete] = useState(false);
+  
+  // --- Estados Gerais ---
   const [error, setError] = useState<string | null>(null);
 
-  // --- 2. EFEITOS (useEffect) ---
+  // --- 4. EFEITOS (useEffect) ---
   
-  // Este efeito roda QUANDO o userId MUDAR (ou seja, depois do login)
+  // Efeito para buscar Catálogo e Carrinho (quando o userId muda)
   useEffect(() => {
-    // Só busca os dados SE o usuário estiver logado
     if (userId) {
       console.log(`Usuário ${userId} logado. Buscando dados...`);
-      
+      const CARRINHO_API_URL = `${API_GATEWAY_URL}/api/carrinho/${userId}`;
+
       const fetchProdutos = async () => {
         setLoadingProdutos(true);
         try {
           const response = await axios.get(`${CATALOGO_API}/produtos/`);
           setProdutos(response.data);
+          setError(null);
         } catch (err) {
           setError("Falha ao carregar o catálogo.");
         } finally {
@@ -79,8 +92,6 @@ function App() {
 
       const fetchCarrinho = async () => {
         setLoadingCarrinho(true);
-        // Constroi a URL da API do carrinho DINAMICAMENTE
-        const CARRINHO_API_URL = `${API_GATEWAY_URL}/api/carrinho/${userId}`;
         try {
           const response = await axios.get(CARRINHO_API_URL);
           setCarrinho(response.data);
@@ -94,27 +105,31 @@ function App() {
       fetchProdutos();
       fetchCarrinho();
     }
-  }, [userId]); // <- A "mágica": só roda quando o userId for definido
+  }, [userId]);
+
+  // Efeito para limpar o frete se o carrinho mudar
+  useEffect(() => {
+    setOpcoesFrete([]);
+    setFreteSelecionado(null);
+  }, [carrinho]);
 
   
-  // --- 3. FUNÇÕES DE AÇÃO ---
+  // --- 5. FUNÇÕES DE AÇÃO ---
 
-  // Função do nosso "Login Falso"
+  // (handleLogin, handleAddToCart, handleRemoveFromCart - IGUAIS A ANTES)
+  // ... (Cole as funções handleLogin, handleAddToCart, e handleRemoveFromCart aqui)
   const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault(); // Impede o refresh da página
+    e.preventDefault();
     if (usernameInput.trim()) {
-      setUserId(usernameInput.trim()); // Define o usuário
+      setUserId(usernameInput.trim());
     }
   };
 
-  // Função para ADICIONAR item (agora usa o 'userId' do estado)
   const handleAddToCart = async (produto: Produto) => {
-    if (!userId) return; // Segurança: não faz nada se não tiver logado
-
+    if (!userId) return;
     const CARRINHO_API_URL = `${API_GATEWAY_URL}/api/carrinho/${userId}`;
     const itemExistente = carrinho?.items.find((item) => item.produto_id === produto.id);
     const novaQuantidade = itemExistente ? itemExistente.quantidade + 1 : 1;
-    
     const payload: ItemCreatePayload = {
       produto_id: produto.id,
       nome_produto: produto.nome,
@@ -122,7 +137,6 @@ function App() {
       quantidade: novaQuantidade,
       imagem_url: produto.imagem_url
     };
-
     try {
       const response = await axios.post(CARRINHO_API_URL, payload);
       setCarrinho(response.data);
@@ -131,10 +145,8 @@ function App() {
     }
   };
 
-  // Função para REMOVER item (agora usa o 'userId' do estado)
   const handleRemoveFromCart = async (produto_id: number) => {
-    if (!userId) return; // Segurança
-
+    if (!userId) return;
     const CARRINHO_API_URL = `${API_GATEWAY_URL}/api/carrinho/${userId}`;
     try {
       const response = await axios.delete(`${CARRINHO_API_URL}/${produto_id}`);
@@ -144,9 +156,43 @@ function App() {
     }
   };
 
-  // --- 4. RENDERIZAÇÃO CONDICIONAL ---
+  // --- NOVA FUNÇÃO DE AÇÃO (Frete) ---
+  const handleCalcularFrete = async () => {
+    if (!cep.trim() || cep.replace("-", "").length !== 8) {
+      alert("Por favor, digite um CEP válido com 8 dígitos.");
+      return;
+    }
+    
+    setLoadingFrete(true);
+    setOpcoesFrete([]);
+    setFreteSelecionado(null);
+    setError(null);
 
-  // SEÇÃO 1: TELA DE LOGIN (se não há userId)
+    try {
+      // 1. Chama o ms-frete via Gateway
+      const response = await axios.post(`${FRETE_API}/calcular`, {
+        cep: cep
+      });
+      
+      // 2. Salva as opções no estado
+      setOpcoesFrete(response.data.opcoes);
+
+    } catch (err) {
+      console.error("Erro ao calcular frete:", err);
+      if (axios.isAxiosError(err) && err.response?.status === 404) {
+        setError("Nenhuma opção de entrega encontrada para este CEP.");
+      } else {
+        setError("Erro ao calcular o frete. Tente novamente.");
+      }
+    } finally {
+      setLoadingFrete(false);
+    }
+  };
+
+
+  // --- 6. RENDERIZAÇÃO CONDICIONAL ---
+
+  // SEÇÃO 1: TELA DE LOGIN (Igual a antes)
   if (!userId) {
     return (
       <div className="login-container">
@@ -165,20 +211,23 @@ function App() {
     );
   }
 
-  // SEÇÃO 2: A LOJA (se JÁ TEM userId)
+  // SEÇÃO 2: A LOJA (JSX do carrinho foi MODIFICADO)
+  
+  // Cálculo do Total
+  const subtotal = carrinho?.valor_total || 0;
+  const valorFrete = freteSelecionado?.valor || 0;
+  const totalGeral = subtotal + valorFrete;
+
   return (
     <div className="app-layout">      
-      {/* --- COLUNA DO CATÁLOGO --- */}
+      {/* --- COLUNA DO CATÁLOGO (Igual a antes) --- */}
       <main className="catalogo-container">
         <h1>💖 Catálogo 💖</h1>
-        
         {loadingProdutos && <p className="loading-message">Carregando catálogo...</p>}
         {error && <p className="error-message">{error}</p>}
-        
         <div className="catalogo-grid">
           {produtos.map(produto => (
             <div className="produto-card" key={produto.id}>
-              {/* (O JSX do card é igual ao de antes) */}
               <img src={produto.imagem_url} alt={produto.nome} className="produto-imagem"/>
               <div className="produto-info">
                 <h2>{produto.nome}</h2>
@@ -195,38 +244,93 @@ function App() {
         </div>
       </main>
 
-      {/* --- COLUNA DO CARRINHO --- */}
+      {/* --- COLUNA DO CARRINHO (MODIFICADA) --- */}
       <aside className="carrinho-container">
         <h2>Meu Carrinho 🛍️</h2>
         
         {loadingCarrinho && <p>Carregando carrinho...</p>}
         
-        {carrinho && carrinho.items.length === 0 && <p>Seu carrinho está vazio.</p>}
+        {!loadingCarrinho && carrinho && carrinho.items.length === 0 && (
+          <p>Seu carrinho está vazio.</p>
+        )}
 
-        {carrinho && carrinho.items.length > 0 && (
-          <>
-            <div className="carrinho-lista">
-              {carrinho.items.map(item => (
-                <div className="carrinho-item" key={item.produto_id}>
-                  {/* (O JSX do item é igual ao de antes) */}
-                  <img src={item.imagem_url || ''} alt={item.nome_produto} />
-                  <div className="carrinho-item-info">
-                    <p className="item-nome">{item.nome_produto}</p>
-                    <p className="item-preco">{item.quantidade} x R$ {item.preco_produto.toFixed(2)}</p>
-                  </div>
-                  <button className="remove-item-btn" onClick={() => handleRemoveFromCart(item.produto_id)}>
-                    &times;
-                  </button>
+        {/* --- Lista de Itens (Igual) --- */}
+        {!loadingCarrinho && carrinho && carrinho.items.length > 0 && (
+          <div className="carrinho-lista">
+            {carrinho.items.map(item => (
+              <div className="carrinho-item" key={item.produto_id}>
+                <img src={item.imagem_url || ''} alt={item.nome_produto} />
+                <div className="carrinho-item-info">
+                  <p className="item-nome">{item.nome_produto}</p>
+                  <p className="item-preco">{item.quantidade} x R$ {item.preco_produto.toFixed(2)}</p>
                 </div>
-              ))}
+                <button className="remove-item-btn" onClick={() => handleRemoveFromCart(item.produto_id)}>
+                  &times;
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* --- Seção de Frete (NOVA) --- */}
+        {/* Só mostra o frete se o carrinho não estiver vazio */}
+        {!loadingCarrinho && carrinho && carrinho.items.length > 0 && (
+          <div className="frete-container">
+            <h4>Calcular Frete</h4>
+            <div className="cep-input-group">
+              <input 
+                type="text" 
+                placeholder="Digite seu CEP" 
+                value={cep}
+                onChange={(e) => setCep(e.target.value)}
+                maxLength={9} // 00000-000
+              />
+              <button onClick={handleCalcularFrete} disabled={loadingFrete}>
+                {loadingFrete ? "..." : "Calcular"}
+              </button>
+            </div>
+
+            {/* Lista de Opções de Frete */}
+            {opcoesFrete.length > 0 && (
+              <div className="opcoes-frete-lista">
+                {opcoesFrete.map(opcao => (
+                  <div 
+                    key={opcao.metodo} 
+                    className={`opcao-frete-item ${freteSelecionado?.metodo === opcao.metodo ? 'selected' : ''}`}
+                    onClick={() => setFreteSelecionado(opcao)}
+                  >
+                    <span className='metodo'>{opcao.metodo} ({opcao.prazo_dias} dias)</span>
+                    <span className='valor'>R$ {opcao.valor.toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* --- Total (MODIFICADO) --- */}
+        {carrinho && (
+          <div className="carrinho-total">
+            <div className='total-linha'>
+              <span>Subtotal:</span>
+              <span>R$ {subtotal.toFixed(2)}</span>
             </div>
             
-            <div className="carrinho-total">
-              <h3>Total:</h3>
-              <p>R$ {carrinho.valor_total.toFixed(2)}</p>
+            {/* Só mostra o frete se tiver um selecionado */}
+            {freteSelecionado && (
+              <div className='total-linha frete'>
+                <span>Frete ({freteSelecionado.metodo}):</span>
+                <span>R$ {valorFrete.toFixed(2)}</span>
+              </div>
+            )}
+
+            <div className='total-linha geral'>
+              <span>Total:</span>
+              <span>R$ {totalGeral.toFixed(2)}</span>
             </div>
-          </>
+          </div>
         )}
+
       </aside>
     </div>
   )
