@@ -2,7 +2,8 @@ services:
   # --- MICROSERVIÇOS BACKEND ---
   ms-carrinho:
     build:
-      context: backend/ms-carrinho
+      context: ./backend/ms-carrinho
+      dockerfile: Dockerfile
     container_name: ms_carrinho
     restart: always
     networks:
@@ -20,7 +21,8 @@ services:
 
   ms-catalogo:
     build:
-      context: backend/ms-catalogo
+      context: ./backend/ms-catalogo
+      dockerfile: Dockerfile
     container_name: ms_catalogo
     restart: always
     networks:
@@ -38,7 +40,8 @@ services:
 
   ms-frete:
     build:
-      context: backend/ms-frete
+      context: ./backend/ms-frete
+      dockerfile: Dockerfile
     container_name: ms_frete
     restart: always
     networks:
