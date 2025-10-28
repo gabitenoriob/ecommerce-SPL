@@ -74,9 +74,9 @@ const API_GATEWAY_URL = "http://app.localhost:8888";
 const CATALOGO_API = `${API_GATEWAY_URL}/api/catalogo`;
 const FRETE_API = `${API_GATEWAY_URL}/api/frete`; 
 // NOVOS ENDPOINTS
-const PEDIDOS_API = `${API_GATEWAY_URL}/api/pedido`;
-const PAGAMENTO_API = `${API_GATEWAY_URL}/api/pagamento`;
-const RECOMENDACOES_API = `${API_GATEWAY_URL}/api/recomendacao`;
+const PEDIDOS_API = `${API_GATEWAY_URL}/api/pedidos`;
+const PAGAMENTO_API = `${API_GATEWAY_URL}/api/pagamentos`;
+const RECOMENDACOES_API = `${API_GATEWAY_URL}/api/recomendacoes`;
 
 // --- 3. COMPONENTE PRINCIPAL ---
 function App() {
