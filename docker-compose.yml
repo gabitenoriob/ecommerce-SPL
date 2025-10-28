@@ -12,11 +12,11 @@ services:
       - DATABASE_URL=postgresql://lps_carrinho_user:BYGO4ZfFm8J6CrIV8R7dgUjcjUv0WcOm@dpg-d3vr2ea4d50c73ak8a60-a.oregon-postgres.render.com/lps_carrinho
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=lps_network_local"
+      - "traefik.docker.network=ecommerce-spl_lps_network_local"
       - "traefik.http.routers.ms-carrinho.rule=Host(`app.localhost`) && PathPrefix(`/api/carrinho`)"
       - "traefik.http.routers.ms-carrinho.entrypoints=web"
       - "traefik.http.middlewares.strip-carrinho.stripprefix.prefixes=/api/carrinho"
-      - "traefik.http.routers.ms-carrinho.middlewares=strip-carrinho,cors-header"
+      - "traefik.http.routers.ms-carrinho.middlewares=strip-carrinho"
       - "traefik.http.services.ms-carrinho.loadbalancer.server.port=8002"
 
   ms-catalogo:
@@ -31,11 +31,11 @@ services:
       - DATABASE_URL=postgresql://lps_catalogo_user:tExbtivkJOxm4RUcryNYkFdQrIdgpJEL@dpg-d3vpl9bipnbc739k3b1g-a.ohio-postgres.render.com/lps_catalogo
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=lps_network_local"
+      - "traefik.docker.network=ecommerce-spl_lps_network_local"
       - "traefik.http.routers.ms-catalogo.rule=Host(`app.localhost`) && PathPrefix(`/api/catalogo`)"
       - "traefik.http.routers.ms-catalogo.entrypoints=web"
       - "traefik.http.middlewares.strip-catalogo.stripprefix.prefixes=/api/catalogo"
-      - "traefik.http.routers.ms-catalogo.middlewares=strip-catalogo,cors-header"
+      - "traefik.http.routers.ms-catalogo.middlewares=strip-catalogo"
       - "traefik.http.services.ms-catalogo.loadbalancer.server.port=8001"
 
   ms-frete:
@@ -48,11 +48,11 @@ services:
       - lps_network_local
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=lps_network_local"
+      - "traefik.docker.network=ecommerce-spl_lps_network_local"
       - "traefik.http.routers.ms-frete.rule=Host(`app.localhost`) && PathPrefix(`/api/frete`)"
       - "traefik.http.routers.ms-frete.entrypoints=web"
       - "traefik.http.middlewares.strip-frete.stripprefix.prefixes=/api/frete"
-      - "traefik.http.routers.ms-frete.middlewares=strip-frete,cors-header"
+      - "traefik.http.routers.ms-frete.middlewares=strip-frete"
       - "traefik.http.services.ms-frete.loadbalancer.server.port=8003"
   ms-pagamento:
     build:
@@ -64,26 +64,26 @@ services:
       - lps_network_local
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=lps_network_local"
+      - "traefik.docker.network=ecommerce-spl_lps_network_local"
       - "traefik.http.routers.ms-pagamento.rule=Host(`app.localhost`) && PathPrefix(`/api/pagamentos`)"
       - "traefik.http.routers.ms-pagamento.entrypoints=web"
       - "traefik.http.middlewares.strip-pagamento.stripprefix.prefixes=/api/pagamentos"
-      - "traefik.http.routers.ms-pagamento.middlewares=strip-pagamento,cors-header"
+      - "traefik.http.routers.ms-pagamento.middlewares=strip-pagamento"
       - "traefik.http.services.ms-pagamento.loadbalancer.server.port=8004"  
   # --- FRONTEND ---
   frontend:
     build:
-      context: frontend/app-ecommerce
+      context: frontend
     container_name: frontend
     restart: always
     networks:
       - lps_network_local
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=lps_network_local"
+      - "traefik.docker.network=ecommerce-spl_lps_network_local"
       - "traefik.http.routers.frontend.rule=Host(`app.localhost`)"
       - "traefik.http.routers.frontend.entrypoints=web"
-      - "traefik.http.routers.frontend.middlewares=cors-header"
+      # - "traefik.http.routers.frontend.middlewares=cors-header"
       - "traefik.http.services.frontend.loadbalancer.server.port=5173"
 
   # --- GATEWAY ---
@@ -92,7 +92,7 @@ services:
     container_name: traefik-local
     command:
       # --- Pontos de Entrada ---
-      - "--entrypoints.web.address=:8080"
+      - "--entrypoints.web.address=:8090"
       - "--entrypoints.dashboard.address=:8081"
       # --- Provedor Docker ---
       - "--providers.docker=true"
@@ -103,7 +103,7 @@ services:
       # --- Log ---
       - "--log.level=INFO"
     ports:
-      - "8888:8080"  # API Gateway (web)
+      - "8888:8090"  # API Gateway (web)
       - "8181:8081"  # Dashboard
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -111,12 +111,12 @@ services:
       - lps_network_local
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=lps_network_local"
+      - "traefik.docker.network=ecommerce-spl_lps_network_local"
       - "traefik.http.routers.dashboard.rule=Host(`traefik.localhost`)"
       - "traefik.http.routers.dashboard.entrypoints=dashboard"
       - "traefik.http.routers.dashboard.service=api@internal"
       # --- DEFINIÇÃO DO MIDDLEWARE CORS AGORA AQUI ---
-      - "traefik.http.middlewares.cors-header.headers.accesscontrolalloworigins=http://app.localhost:8888,http://localhost:5173"
+      - "traefik.http.middlewares.cors-header.headers.accesscontrolalloworigin=*"
       - "traefik.http.middlewares.cors-header.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS"
       - "traefik.http.middlewares.cors-header.headers.accesscontrolallowheaders=*"
       - "traefik.http.middlewares.cors-header.headers.accesscontrolallowcredentials=true"

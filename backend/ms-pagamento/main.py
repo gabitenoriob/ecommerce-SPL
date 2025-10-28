@@ -1,10 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from typing import Dict
 from schema import PagamentoRequest, PagamentoResponse, StatusPagamento
+import uvicorn
 SERVICE_HOST = "0.0.0.0"
 SERVICE_PORT = 8004 
 
-app = FastAPI(title="Microserviço de Pagamentos", root_path="/api/pagamentos")
 # Dicionário simples para simular o banco de dados de pagamentos
 # Chave: id_pagamento, Valor: objeto PagamentoResponse
 db_pagamentos: Dict[str, PagamentoResponse] = {}
@@ -13,10 +13,7 @@ next_id = 1
 app = FastAPI(
     title="Microserviço de Pagamento",
     description="Responsável por processar pagamentos.",
-    # Configuração do Traefik/Consul para Descoberta de Serviço
-    openapi_url="/api/pagamento/openapi.json",
-    docs_url="/api/pagamento/docs",
-    redoc_url="/api/pagamento/redoc"
+    root_path="/api/pagamentos"
 )
 
 # Simulando um processador de pagamento
@@ -69,4 +66,12 @@ def consultar_status(id_pagamento: str):
 @app.get("/health/")
 def health_check():
     return {"status": "ok", "service": "ms-pagamento"}
+
+if __name__ == "__main__":
+    uvicorn.run(
+        "main:app",
+        host=SERVICE_HOST,
+        port=SERVICE_PORT,
+        reload=True
+    )
 
