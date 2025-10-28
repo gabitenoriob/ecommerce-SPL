@@ -3,7 +3,6 @@ import axios from 'axios'
 import './App.css'
 
 // --- 1. DEFINIÇÃO DE TIPOS ---
-// (Cole as mesmas interfaces que definimos antes)
 interface Produto {
   id: number;
   nome: string;

@@ -1,189 +1,191 @@
-/* Reseta e define o básico */
-body {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #1a1a1a; /* Fundo mais escuro */
+/* --- 1. RESET E ESTILOS GLOBAIS --- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+:root {
+  --primary-color: #ff69b4; /* Pink */
+  --secondary-color: #333;
+  --background-light: #f9f9f9;
+  --background-dark: #ffffff;
+  --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-hover: 0 6px 12px rgba(0, 0, 0, 0.15);
+  --border-radius: 12px;
 }
 
-/* Container principal */
-.app-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 2rem;
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: var(--background-light);
+  color: var(--secondary-color);
+}
+
+h1, h2, h3, h4 {
+  color: var(--secondary-color);
+  margin-top: 0;
+}
+
+/* --- 2. TELA DE LOGIN --- */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.login-container form {
+  background: var(--background-dark);
+  padding: 40px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-light);
+  max-width: 400px;
+  width: 100%;
   text-align: center;
 }
 
-h1 {
-  font-size: 2.5rem;
-  color: #ffafcc; /* Um rosa fofo */
-  margin-bottom: 2rem;
+.login-container input {
+  width: 100%;
+  padding: 12px;
+  margin: 15px 0 25px 0;
+  border: 1px solid #ddd;
+  border-radius: 8px;
 }
 
-/* Mensagens de estado */
-.loading-message, .error-message {
-  font-size: 1.5rem;
-  margin-top: 4rem;
-}
-.error-message {
-  color: #ff6b6b;
+.login-container button, .add-to-cart-btn {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s, transform 0.1s;
 }
 
-/* Grid do Catálogo */
+.login-container button:hover, .add-to-cart-btn:hover {
+  background-color: #ff88c8;
+  transform: translateY(-1px);
+}
+.login-container button:disabled, .add-to-cart-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+
+/* --- 3. LAYOUT PRINCIPAL (App) --- */
+.app-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  min-height: 100vh;
+  padding: 20px;
+  gap: 30px;
+}
+
+@media (min-width: 1024px) {
+  .app-layout {
+    grid-template-columns: 3fr 1fr; /* Catálogo 3 partes, Carrinho 1 parte */
+    padding: 30px;
+  }
+}
+
+/* --- 4. CATÁLOGO --- */
+.catalogo-container h1 {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 2.5em;
+  color: var(--primary-color);
+}
+
 .catalogo-grid {
   display: grid;
-  /* Cria colunas responsivas: 
-     - Tenta criar colunas de 300px
-     - Se não couber, elas diminuem (minmax)
-     - Se couber mais, elas crescem (1fr) */
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 2rem; /* Espaço entre os cards */
-  text-align: left;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 25px;
 }
 
-/* Card de Produto Individual */
 .produto-card {
-  border: 1px solid #333;
-  border-radius: 12px;
-  background-color: #242424;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-  overflow: hidden; /* Garante que a imagem não vaze */
+  background: var(--background-dark);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-light);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  transition: box-shadow 0.2s;
 }
 
 .produto-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(255, 175, 204, 0.2);
+  box-shadow: var(--shadow-hover);
 }
 
-/* Imagem do Produto */
 .produto-imagem {
   width: 100%;
-  height: 300px; /* Altura fixa para as imagens */
-  object-fit: cover; /* Garante que a imagem cubra o espaço */
-  border-bottom: 1px solid #333;
+  height: 200px;
+  object-fit: cover;
 }
 
-/* Informações abaixo da imagem */
 .produto-info {
-  padding: 1.5rem;
+  padding: 15px;
   flex-grow: 1;
   display: flex;
   flex-direction: column;
 }
 
 .produto-info h2 {
-  font-size: 1.4rem;
-  margin-top: 0;
-  margin-bottom: 0.75rem;
-  color: #ffc2e2;
+  font-size: 1.2em;
+  margin-bottom: 5px;
 }
 
 .produto-descricao {
-  font-size: 0.95rem;
-  color: #b0b0b0;
-  flex-grow: 1; /* Empurra o preço para baixo */
-  margin-bottom: 1rem;
-}
-
-.produto-preco {
-  font-size: 1.3rem;
-  font-weight: bold;
-  color: #c792ea; /* Um roxo */
-  margin: 0;
-  text-align: right;
-}
-/* --- Layout Principal (2 Colunas) --- */
-.app-layout {
-  display: grid;
-  /* Cria duas colunas: a primeira (catálogo) ocupa 3x mais espaço */
-  /* que a segunda (carrinho) */
-  grid-template-columns: 3fr 1fr;
-  gap: 2rem;
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 2rem;
-  align-items: flex-start; /* Alinha o topo das colunas */
-}
-
-/* Garante que o catálogo use o espaço */
-.catalogo-container {
-  width: 100%;
-}
-
-/* --- Estilos do Card de Produto (Modificado) --- */
-
-.produto-info {
-  /* Remove o 'flex-grow: 1' para o botão ficar alinhado */
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.produto-descricao {
-  flex-grow: 1; /* Empurra o footer para baixo */
+  font-size: 0.9em;
+  color: #666;
+  margin-bottom: 10px;
+  flex-grow: 1;
 }
 
 .produto-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 1rem;
+  margin-top: 10px;
 }
 
-.add-to-cart-btn {
-  background-color: #c792ea;
-  color: #1a1a1a;
-  font-weight: bold;
-  border: none;
-  border-radius: 8px;
-  padding: 0.6em 1em;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.add-to-cart-btn:hover {
-  background-color: #b373d9;
+.produto-preco {
+  font-size: 1.2em;
+  font-weight: 700;
+  color: var(--primary-color);
 }
 
 
-/* --- Coluna do Carrinho --- */
+/* --- 5. CARRINHO (ASIDE) --- */
 .carrinho-container {
-  background-color: #242424;
-  border: 1px solid #333;
-  border-radius: 12px;
-  padding: 1.5rem;
-  /* Faz o carrinho "grudar" no topo quando o usuário rola a página */
+  background: var(--background-dark);
+  padding: 20px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-light);
+  height: fit-content;
   position: sticky;
-  top: 2rem; 
+  top: 30px; /* Mantém o carrinho fixo durante o scroll */
 }
 
 .carrinho-container h2 {
-  margin-top: 0;
-  color: #ffafcc;
-  border-bottom: 1px solid #444;
-  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--primary-color);
+  padding-bottom: 10px;
+  margin-bottom: 20px;
 }
 
 .carrinho-lista {
-  max-height: 50vh; /* Altura máxima, para não ficar gigante */
-  overflow-y: auto; /* Adiciona scroll se tiver muitos itens */
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  margin-bottom: 20px;
 }
 
-/* --- Item Individual do Carrinho --- */
 .carrinho-item {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  border-bottom: 1px solid #333;
-  padding-bottom: 1rem;
+  gap: 15px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
 }
 
 .carrinho-item:last-child {
@@ -191,199 +193,141 @@ h1 {
 }
 
 .carrinho-item img {
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 .carrinho-item-info {
   flex-grow: 1;
 }
 
-.carrinho-item-info .item-nome {
-  font-weight: bold;
-  font-size: 0.95rem;
+.item-nome {
+  font-weight: 600;
   margin: 0;
 }
-.carrinho-item-info .item-preco {
-  font-size: 0.9rem;
-  color: #aaa;
+
+.item-preco {
+  font-size: 0.9em;
+  color: #888;
   margin: 0;
 }
 
 .remove-item-btn {
-  background-color: #ff6b6b;
-  color: white;
+  background: none;
   border: none;
-  border-radius: 50%;
-  width: 25px;
-  height: 25px;
-  font-size: 1rem;
-  font-weight: bold;
+  color: #ff69b4;
   cursor: pointer;
-  line-height: 25px;
-  padding: 0;
+  font-size: 1.2em;
+  transition: color 0.2s;
 }
 
-/* --- Total do Carrinho --- */
-.carrinho-total {
-  border-top: 2px solid #444;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 1.3rem;
-  font-weight: bold;
-}
-.carrinho-total p {
-  margin: 0;
-  color: #c792ea;
+.remove-item-btn:hover {
+  color: #c90060;
 }
 
-/* --- ESTILOS PARA A TELA DE LOGIN --- */
-.login-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  text-align: center;
-}
-
-.login-container form {
-  background-color: #242424;
-  padding: 3rem;
-  border-radius: 12px;
-  border: 1px solid #333;
-}
-
-.login-container h1 {
-  color: #ffafcc;
-  margin-top: 0;
-}
-
-.login-container input {
-  font-size: 1.2rem;
-  padding: 0.8rem;
-  border-radius: 8px;
-  border: 1px solid #444;
-  margin-top: 1rem;
-  width: 100%;
-}
-
-.login-container button {
-  font-size: 1.2rem;
-  padding: 0.8rem 1.5rem;
-  border-radius: 8px;
-  border: none;
-  background-color: #c792ea;
-  color: #1a1a1a;
-  font-weight: bold;
-  cursor: pointer;
-  margin-top: 1.5rem;
-  width: 100%;
-}
-
-/* --- Seção de Frete --- */
+/* --- 6. SEÇÃO DE FRETE --- */
 .frete-container {
-  border-top: 1px solid #444;
-  margin-top: 1rem;
-  padding-top: 1rem;
+  border-top: 1px solid #eee;
+  padding-top: 15px;
+  margin-top: 15px;
 }
+
 .frete-container h4 {
-  margin: 0 0 0.5rem 0;
-  color: #aaa;
-  font-weight: normal;
+  margin-bottom: 10px;
+  color: var(--primary-color);
 }
 
 .cep-input-group {
   display: flex;
-  gap: 0.5rem;
-}
-.cep-input-group input {
-  flex-grow: 1;
-  background-color: #1a1a1a;
-  border: 1px solid #555;
-  border-radius: 6px;
-  padding: 0.6em;
-  color: white;
-}
-.cep-input-group button {
-  background-color: #555;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 0 1em;
-  cursor: pointer;
-}
-.cep-input-group button:hover {
-  background-color: #666;
-}
-.cep-input-group button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  gap: 10px;
+  margin-bottom: 15px;
 }
 
-/* --- Lista de Opções de Frete --- */
+.cep-input-group input {
+  flex-grow: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.cep-input-group button {
+  padding: 10px 15px;
+  white-space: nowrap;
+}
+
 .opcoes-frete-lista {
-  margin-top: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 8px;
 }
+
 .opcao-frete-item {
   display: flex;
   justify-content: space-between;
-  background-color: #333;
-  padding: 0.75rem;
-  border-radius: 6px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #eee;
+  border-radius: 8px;
   cursor: pointer;
-  border: 2px solid transparent;
-  transition: border-color 0.2s;
+  transition: background-color 0.2s, border-color 0.2s;
 }
+
 .opcao-frete-item:hover {
-  border-color: #555;
+  background-color: #fff0f5;
+  border-color: var(--primary-color);
 }
+
 .opcao-frete-item.selected {
-  border-color: #c792ea;
-  background-color: #3f3544;
+  background-color: #ffe4f0; /* Lightest pink */
+  border-color: var(--primary-color);
+  font-weight: 600;
 }
-.opcao-frete-item .metodo {
-  font-size: 0.9rem;
-  font-weight: bold;
-}
+
 .opcao-frete-item .valor {
-  font-size: 0.9rem;
-  color: #ccc;
+  color: var(--primary-color);
+  font-weight: 700;
 }
 
+.loading-message, .error-message {
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  margin: 10px 0;
+}
 
-/* --- Total do Carrinho (Modificado) --- */
+.loading-message {
+  background-color: #e0f7fa;
+  color: #00838f;
+}
+
+.error-message {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+/* --- 7. TOTALS --- */
 .carrinho-total {
-  display: flex;
-  flex-direction: column; /* Mudar para coluna */
-  gap: 0.5rem; /* Espaço entre as linhas */
-  border-top: 2px solid #444;
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
+  border-top: 2px solid #ddd;
+  padding-top: 15px;
+  margin-top: 20px;
 }
+
 .total-linha {
   display: flex;
   justify-content: space-between;
-  font-size: 1.1rem;
+  margin-bottom: 8px;
+  font-size: 1.1em;
 }
+
 .total-linha.frete {
-  font-size: 1rem;
-  color: #ccc;
+  color: #666;
+  font-size: 1em;
 }
+
 .total-linha.geral {
-  font-size: 1.4rem;
-  font-weight: bold;
-  color: #c792ea;
-  margin-top: 0.5rem;
-}
-/* Remove o 'p' antigo (agora obsoleto) */
-.carrinho-total p {
-  display: none;
+  font-weight: 700;
+  font-size: 1.4em;
+  color: var(--secondary-color);
 }
