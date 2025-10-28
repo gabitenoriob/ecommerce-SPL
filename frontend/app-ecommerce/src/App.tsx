@@ -24,7 +24,7 @@ interface Carrinho {
   items: ItemCarrinho[];
   valor_total: number;
 }
-interface ItemCreatePayload {
+interface ItemCreatePayload { // Usado para ADICIONAR ao carrinho (ms-carrinho)
   produto_id: number;
   nome_produto: string;
   preco_produto: number;
@@ -38,31 +38,47 @@ interface OpcaoFrete {
   valor: number;
 }
 
-// --- NOVOS TIPOS PARA PEDIDOS E PAGAMENTO ---
-interface ItemPedido {
+// --- NOVOS TIPOS PARA PEDIDOS E PAGAMENTO (AJUSTADOS AOS SCHEMAS PYDANTIC) ---
+
+// Corresponde ao ItemPedidoBase do Pydantic (usado na criação do pedido)
+interface ItemPedidoCreate {
   produto_id: number;
   nome_produto: string;
-  preco_produto: number;
+  preco_unitario: number; // <--- MUDANÇA: Alinhado ao Pydantic 'preco_unitario'
   quantidade: number;
-  imagem_url: string | null;
+}
+
+// Corresponde ao ItemPedido do Pydantic (usado na leitura do pedido)
+interface ItemPedido {
+  id: number; // <--- MUDANÇA: Alinhado ao Pydantic 'id: int'
+  pedido_id: number; // <--- MUDANÇA: Alinhado ao Pydantic 'pedido_id: int'
+  produto_id: number;
+  nome_produto: string;
+  preco_unitario: number; // <--- MUDANÇA: Alinhado ao Pydantic 'preco_unitario: float'
+  quantidade: number;
+  // 'imagem_url' removida para alinhar ao schema Pydantic ItemPedido
 }
 
 interface Pedido {
-  id: string; // ID do pedido
+  id: number; // <--- MUDANÇA: Alinhado ao Pydantic 'id: int'
   user_id: string;
-  items: ItemPedido[];
+  items: ItemPedido[]; // Usa a interface ItemPedido atualizada
   valor_total: number;
-  frete: OpcaoFrete;
-  status: string; // ex: "Processando", "Concluído"
-  data_pedido: string; // ISO string
+  frete: OpcaoFrete; // Assumindo que o Gateway adiciona isso ao pedido, mesmo não estando no schema Pydantic 'Pedido' base
+  status: string; // Alinhado ao Pydantic 'StatusPedido' (string enum)
+  // data_pedido: string; // ANTIGO
+  created_at: string; // <--- MUDANÇA: Alinhado ao Pydantic 'created_at: datetime'
 }
 
+// Payload para /api/pagamentos, que (aparentemente) cria o pedido
 interface PagamentoPayload {
   user_id: string;
-  items: ItemCarrinho[];
+  // items: ItemCarrinho[]; // ANTIGO
+  items: ItemPedidoCreate[]; // <--- MUDANÇA: Alinhado ao Pydantic 'ItemPedidoBase'
   frete: OpcaoFrete;
   valor_total: number;
   status: string;
+  metodo_pagamento: string; // <--- MUDANÇA: Adicionado para alinhar ao 'PagamentoRequest'
 }
 
 // Tipo para o estado de navegação
@@ -160,7 +176,16 @@ function App() {
 
           // Processar Recomendações (REAL)
           if (recomendacoesRes.status === 'fulfilled') {
-            setRecomendacoes(recomendacoesRes.value.data);
+            // --- MUDANÇA: Acessar o array aninhado conforme o schema 'RecomendacaoResponse' ---
+            // Assumindo que a API retorna { user_id: "...", produtos_recomendados: [Produto, ...] }
+            // Onde [Produto] são objetos completos do catálogo
+            if (recomendacoesRes.value.data && recomendacoesRes.value.data.produtos_recomendados) {
+              setRecomendacoes(recomendacoesRes.value.data.produtos_recomendados);
+            } else {
+              // Fallback se a resposta for apenas o array (comportamento antigo)
+              setRecomendacoes(recomendacoesRes.value.data); 
+              console.warn("Resposta de recomendações veio em formato inesperado, mas foi tratada.");
+            }
           } else {
             // API Real falhou
             setRecomendacoes([]); 
@@ -214,7 +239,9 @@ function App() {
     const CARRINHO_API_URL = `${API_GATEWAY_URL}/api/carrinho/${userId}`;
     const itemExistente = carrinho?.items.find((item) => item.produto_id === produto.id);
     const novaQuantidade = itemExistente ? itemExistente.quantidade + 1 : 1;
-    const payload: ItemCreatePayload = {
+    
+    // O payload para o 'ms-carrinho' usa 'preco_produto'
+    const payload: ItemCreatePayload = { 
       produto_id: produto.id,
       nome_produto: produto.nome,
       preco_produto: produto.preco,
@@ -300,18 +327,32 @@ function App() {
     setLoadingPagamento(true);
     setError(null);
 
+    // --- MUDANÇA: Transformar items do carrinho para 'ItemPedidoCreate' ---
+    // O carrinho usa 'preco_produto', mas o schema 'ItemPedidoBase' (pedidos) usa 'preco_unitario'
+    const itemsParaPedido: ItemPedidoCreate[] = carrinho.items.map(item => ({
+      produto_id: item.produto_id,
+      nome_produto: item.nome_produto,
+      preco_unitario: item.preco_produto, // <--- Mapeamento de 'preco_produto' para 'preco_unitario'
+      quantidade: item.quantidade
+      // 'imagem_url' é removida, pois 'ItemPedidoBase' não a possui
+    }));
+
+    // --- MUDANÇA: Criar o payload alinhado aos schemas Pydantic ---
     const payload: PagamentoPayload = {
       user_id: userId,
-      items: carrinho.items,
+      // items: carrinho.items, // ANTIGO
+      items: itemsParaPedido, // <--- NOVO: Usa os itens transformados
       frete: freteSelecionado,
       valor_total: (carrinho.valor_total || 0) + (freteSelecionado.valor || 0),
-      status: "Processando"};
+      status: "Processando", // O ms-pedidos/pagamentos deve definir o status inicial
+      metodo_pagamento: "cartao_credito" // <--- NOVO: Adicionado campo do 'PagamentoRequest'
+    };
 
     try {
-      // 1. Chamar API de Pagamento (REAL)
-       const response = await axios.post(PAGAMENTO_API, payload);
-       // Supondo que a API de pagamento retorna o pedido criado no formato { pedido: Pedido }
-       const novoPedido: Pedido = response.data.pedido;
+      // 1. Chamar API de Pagamento (que cria o pedido)
+        const response = await axios.post(PAGAMENTO_API, payload);
+        // Supondo que a API de pagamento retorna o pedido criado no formato { pedido: Pedido }
+        const novoPedido: Pedido = response.data.pedido;
       
       // Simulação REMOVIDA
 
@@ -541,7 +582,7 @@ function App() {
           <div className="catalogo-grid">
             {/* Reusar o card de produto */}
             {recomendacoes.map(produto => (
-               <div className="produto-card" key={produto.id}>
+                <div className="produto-card" key={produto.id}>
                 <img src={produto.imagem_url} alt={produto.nome} className="produto-imagem"/>
                 <div className="produto-info">
                   <h2>{produto.nome}</h2>
@@ -571,15 +612,17 @@ function App() {
             {pedidos.map(pedido => (
               <div className="pedido-card" key={pedido.id}>
                 <div className="pedido-header">
-                  <h3>Pedido #{pedido.id.substring(0, 8)}</h3>
+                  {/* --- MUDANÇA: 'id' agora é number --- */}
+                  <h3>Pedido #{pedido.id.toString().substring(0, 8)}</h3>
                   <span className="status-pedido">Status: {pedido.status}</span>
                 </div>
                 <div className="pedido-body">
-                  <p>Data: {new Date(pedido.data_pedido).toLocaleDateString()}</p>
+                  {/* --- MUDANÇA: Usar 'created_at' --- */}
+                  <p>Data: {new Date(pedido.created_at).toLocaleDateString()}</p>
                   <p>Total: R$ {pedido.valor_total.toFixed(2)}</p>
                   <p>Itens: {pedido.items.length}</p>
                 </div>
-                {/* TODO: Expandir para ver detalhes dos itens */}
+                {/* TODO: Expandir para ver detalhes dos itens (exigiria 'preco_unitario') */}
               </div>
             ))}
           </div>
@@ -603,6 +646,7 @@ function App() {
                     <img src={item.imagem_url || ''} alt={item.nome_produto} className="item-imagem" />
                     <div className="carrinho-item-info">
                       <p className="item-nome">{item.nome_produto}</p>
+                      {/* O resumo ainda mostra o preco_produto do carrinho, o que está correto */}
                       <p className="item-preco">{item.quantidade} x R$ {item.preco_produto.toFixed(2)}</p>
                     </div>
                     {/* Sem botão de remover aqui */}
@@ -660,4 +704,3 @@ function App() {
 }
 
 export default App
-
