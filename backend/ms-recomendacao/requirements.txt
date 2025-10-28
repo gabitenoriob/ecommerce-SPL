@@ -1,4 +1,0 @@
-fastapi
-uvicorn
-pydantic
-httpx  # Para comunicação assíncrona com outros microserviços (Pedidos, Catálogo)
