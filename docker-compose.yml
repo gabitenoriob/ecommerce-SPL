@@ -1,5 +1,26 @@
 services:
   # --- MICROSERVIÇOS BACKEND ---
+  ms-pedido:
+    build:
+      context: ./backend/ms-pedido 
+      dockerfile: Dockerfile
+    container_name: ms_pedido      
+    restart: always
+    networks:
+      - lps_network_local         
+    environment:
+      - DATABASE_URL=postgresql://pedidos_db_srp8_user:jqS8cCXpllb22LTBNs9Zt63k8I7HtGsM@dpg-d402k2h5pdvs73fk3ljg-a.oregon-postgres.render.com/pedidos_db_srp8
+      - "traefik.enable=true"
+      # Ajuste o nome da rede se o seu docker-compose nomeia diferente
+      - "traefik.docker.network=ecommerce-spl_lps_network_local"
+      # Rota no Traefik: acessível via http://app.localhost:8888/api/pedidos
+      - "traefik.http.routers.ms-pedido.rule=Host(`app.localhost`) && PathPrefix(`/api/pedidos`)"
+      - "traefik.http.routers.ms-pedido.entrypoints=web"
+      # Middleware para remover o /api/pedidos antes de encaminhar
+      - "traefik.http.middlewares.strip-pedido.stripprefix.prefixes=/api/pedidos"
+      - "traefik.http.routers.ms-pedido.middlewares=strip-pedido"
+      # Porta que o ms-pedido está rodando DENTRO do container (definida no main.py)
+      - "traefik.http.services.ms-pedido.loadbalancer.server.port=8005" # ATENÇÃO: Use a porta definida no main.py
   ms-carrinho:
     build:
       context: ./backend/ms-carrinho
