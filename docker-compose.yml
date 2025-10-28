@@ -52,6 +52,58 @@ services:
       - "traefik.http.routers.ms-frete.middlewares=strip-frete,cors-header"
       - "traefik.http.services.ms-frete.loadbalancer.server.port=8003"
 
+  # --- SERVIÇO DE PEDIDO/CHECKOUT (ms-pedido) ---
+  # Orquestrador principal do checkout (Carrinho -> Estoque -> Pagamento -> Limpa Carrinho)
+  ms-pedido:
+    build:
+      context: backend/ms-pedido
+    container_name: ms_pedido
+    restart: always
+    networks:
+      - lps_network_local
+    environment:
+      # URLs internas dos microserviços (usando nomes dos containers e portas internas)
+      - CARRINHO_SERVICE_URL=http://ms_carrinho:8002/api/carrinho
+      - PAGAMENTO_SERVICE_URL=http://ms_pagamento:8004/api/pagamento
+      - ESTOQUE_SERVICE_URL=http://ms_estoque:8006/api/estoque
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=lps_network_local"
+      - "traefik.http.routers.ms-pedido.rule=Host(`app.localhost`) && PathPrefix(`/api/pedido`)"
+      - "traefik.http.routers.ms-pedido.entrypoints=web"
+      - "traefik.http.middlewares.strip-pedido.stripprefix.prefixes=/api/pedido"
+      - "traefik.http.routers.ms-pedido.middlewares=strip-pedido,cors-header"
+      - "traefik.http.services.ms-pedido.loadbalancer.server.port=8005" # Porta do FastAPI
+    depends_on:
+      # Garante que os serviços de que ele depende iniciem primeiro
+      - ms-carrinho
+      - ms-pagamento
+      - ms-estoque
+
+  # ---  SERVIÇO DE RECOMENDAÇÃO (ms-recomendacao) ---
+  ms-recomendacao:
+    build:
+      context: backend/ms-recomendacao
+    container_name: ms_recomendacao
+    restart: always
+    networks:
+      - lps_network_local
+    environment:
+      # URLs internas dos microserviços (usando nomes dos containers e portas internas)
+      - PEDIDO_SERVICE_URL=http://ms_pedido:8005/api/pedido
+      - CATALOGO_SERVICE_URL=http://ms_catalogo:8001/api/catalogo
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=lps_network_local"
+      - "traefik.http.routers.ms-recomendacao.rule=Host(`app.localhost`) && PathPrefix(`/api/recomendacao`)"
+      - "traefik.http.routers.ms-recomendacao.entrypoints=web"
+      - "traefik.http.middlewares.strip-recomendacao.stripprefix.prefixes=/api/recomendacao"
+      - "traefik.http.routers.ms-recomendacao.middlewares=strip-recomendacao,cors-header"
+      - "traefik.http.services.ms-recomendacao.loadbalancer.server.port=8007" # Porta do FastAPI
+    depends_on:
+      # Depende do Pedido para histórico e do Catálogo para detalhes do produto
+      - ms-pedido
+      - ms-catalogo
   # --- FRONTEND ---
   frontend:
     build:
