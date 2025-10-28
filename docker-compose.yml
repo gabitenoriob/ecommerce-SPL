@@ -49,6 +49,31 @@ services:
     # A dependência do Consul garante que ele se registre no momento certo
     depends_on:
       - consul-local
+  # SERVIÇO DE PEDIDOS
+  ms-pedido:
+    build:
+      context: ./backend/ms-pedido
+      dockerfile: Dockerfile
+    image: ecommerce-spl/ms-pedido
+    container_name: ms-pedido
+    ports:
+      - "8005:8005" # Porta interna:externa
+    environment:
+      # Variáveis de ambiente para comunicação interna
+      - CARRINHO_SERVICE_URL=http://ms-carrinho:8002/api/carrinho
+      - PAGAMENTO_SERVICE_URL=http://ms-pagamento:8004/api/pagamento
+    labels:
+      # Configuração do Traefik para o serviço de pedidos
+      - "traefik.enable=true"
+      - "traefik.http.routers.ms-pedido.rule=PathPrefix(`/api/pedido`)"
+      - "traefik.http.routers.ms-pedido.entrypoints=web"
+      - "traefik.http.services.ms-pedido.loadbalancer.server.port=8005"
+    networks:
+      - lps_network_local # Garantindo que está na mesma rede
+    depends_on:
+      - consul-local
+      - ms-carrinho # Depende do carrinho e pagamento para a orquestração
+      - ms-pagamento
 
 networks:
   lps_network_local:
