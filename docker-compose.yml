@@ -1,5 +1,29 @@
 services:
   # --- MICROSERVIÇOS BACKEND ---
+  
+  ms-recomendacao: 
+    build:
+      context: ./backend/ms-recomendacao
+      dockerfile: Dockerfile
+    container_name: ms_recomendacao
+    restart: always
+    networks:
+      - lps_network_local
+    environment:
+      # Passa a URL do serviço de pedido para que o ms-recomendacao possa chamá-lo
+      - PEDIDO_SERVICE_URL=http://ms-pedido:8005 # Nome do serviço + porta INTERNA
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=ecommerce-spl_lps_network_local" # Ajuste o nome da rede se necessário
+      # Rota no Traefik: acessível via http://app.localhost:8888/api/recomendacoes
+      - "traefik.http.routers.ms-recomendacao.rule=Host(`app.localhost`) && PathPrefix(`/api/recomendacoes`)"
+      - "traefik.http.routers.ms-recomendacao.entrypoints=web"
+      # Middleware para remover o /api/recomendacoes antes de encaminhar
+      - "traefik.http.middlewares.strip-recomendacao.stripprefix.prefixes=/api/recomendacoes"
+      - "traefik.http.routers.ms-recomendacao.middlewares=strip-recomendacao"
+      # Porta que o ms-recomendacao está rodando DENTRO do container (definida no main.py)
+      - "traefik.http.services.ms-recomendacao.loadbalancer.server.port=8006" # ATENÇÃO: Use a porta definida no main.py
+
   ms-pedido:
     build:
       context: ./backend/ms-pedido 
